@@ -33,6 +33,7 @@ new Promise(function (resolve) {
                     var href = res[key].photo; // присваиваем ссылку на фото
                     var li = document.createElement("li"); // создаем тег li
                     img.setAttribute("src", href); // img присваивам изображение
+                    img.setAttribute("draggable", true)
                     li.appendChild(img); // вставляем в li наш img со ссылкой
                     li.innerHTML += "<span class='friendName'>" + res[key].first_name + " " + res[key].last_name + "</span>" + " <span class='addFriend'>+</span>"// в ли добавляем имя и фамилию
                     friendList.appendChild(li); // вставляем все в первый ul
@@ -52,9 +53,10 @@ new Promise(function (resolve) {
           
 
             friendList.addEventListener("click", function(e){
-                if(e.target.textContent === targAdd.textContent) {
+                if(e.target.classList.contains('addFriend')) {
                     someFriend.appendChild(e.target.parentNode);
                     e.target.classList.add("removeFriend");
+                    e.target.classList.remove("addFriend");
                     e.target.innerHTML = "&chi;";
                     
                 }
@@ -68,33 +70,67 @@ new Promise(function (resolve) {
             someFriend.addEventListener("click", function(e){
                 // нашел баг: если удалять самого верхнего из списка, то можно удалить только
                 // одного человека, после этого событие не работает
-                if(e.target.textContent === targRemove.textContent) {
+                if(e.target.classList.contains('removeFriend')) {
                     friendList.appendChild(e.target.parentNode);
-                    e.target.setAttribute("class", "addFriend");
+                    e.target.classList.addEventListener("addFriend");
+                    e.target.classList.remove("removeFriend");
                     e.target.innerHTML = "+";
                     
                 }
                  rightFriendLi = document.querySelectorAll(".someFriend li"); // если удалили друга, обновим
                  // информацию о наших друзьях из правой колонки
             });
+
+
+            var data;
+            friendList.addEventListener ("dragstart", function(e) {
+                e.dataTransfer.effectAllowed="move";
+                data = e.target.parentNode;
+                e.dataTransfer.setDragImage(e.target, 25, 25);
+                return true;
+            });
+
+            someFriend.addEventListener("dragenter", function(e) {
+                e.preventDefault();
+                return true;
+            });
+
+            // someFriend.addEventListener("dragover", function(e) {
+            //     e.preventDefault();
+            // });
+
+            someFriend.addEventListener("dragdrop", function(e) {
+                someFriend.appendChild(data);
+                log(e.target)
+                e.stopPropagarion();
+                return false;
+            });
+
+
+
+
            
             searchAll.addEventListener("input", function() {
                 var temp = searchAll.value; // значение из инпута
-                if (temp.length === 0) {
+                if (temp.length === 0) { // если поле пустое, дальше перебор всех друзей
+                    // на поиск класса с display: none;
                     for (var key in findFriend) {
-                        if(findFriend[key].classList.contains("not-visible")) {
-                            findFriend[key].classList.remove("not-visible");
+                        if(findFriend[key].classList.contains("not-visible")) { // проверка, если ли
+                            // в нашем списке друзей слева у эл-тов класс not-visible
+                            findFriend[key].classList.remove("not-visible"); // удаляем, если есть.
+                            // и после чего отобразятся все друзья
                         }
                     } 
-                } else {
-                    for (var key in findFriend) {
+                } else { // если инпут не пустой, делаем всех скрытыми
+                    for (var key in findFriend) { 
                         findFriend[key].classList.add("not-visible");
                         return log(findFriend[key]);
                         
                     }
                         for (var i = 0; i < findFriend.length; i++) { // цикл для поиска по индексу
                         if(findFriend[i].innerHTML.indexOf(temp) !== -1){
-                            friendList.classList.remove("not-visible"); // выводим тех друзей, которые соответствую поиску
+                            friendList.classList.remove("not-visible"); // выводим тех друзей,
+                            // которые соответствую поиску, удаляя класс с display: none;
                         }
                     };
 
