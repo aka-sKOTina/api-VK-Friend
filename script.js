@@ -28,15 +28,18 @@ new Promise(function (resolve) {
         return new Promise(function (resolve, reject) { 
             VK.api("friends.get", {'fields': 'photo'}, function (response) { 
                 var res = response.response;
+                
                 for (var key in res) {
                     var img = document.createElement("img"); // cоздаем тег img
                     var href = res[key].photo; // присваиваем ссылку на фото
                     var li = document.createElement("li"); // создаем тег li
+                    li.setAttribute("id", res[key].uid); // добавляем каждому эл-ту li id, который = id друга
                     img.setAttribute("src", href); // img присваивам изображение
                     img.setAttribute("draggable", true)
                     li.appendChild(img); // вставляем в li наш img со ссылкой
                     li.innerHTML += "<span class='friendName'>" + res[key].first_name + " " + res[key].last_name + "</span>" + " <span class='addFriend'>+</span>"// в ли добавляем имя и фамилию
                     friendList.appendChild(li); // вставляем все в первый ul
+                    
                 }
                 var allLi = document.querySelectorAll("li"); // находим все li
                 resolve(allLi);
@@ -45,8 +48,15 @@ new Promise(function (resolve) {
         }); 
     })
     .then(function (allLi) {
-            var targAdd = document.querySelector(".addFriend"); // добавляю переменную для сравнения
-            var findFriend = document.querySelectorAll(".friendList li"); // список друзей из левой колонки
+            var retObj = JSON.parse(localStorage.getItem("object")); // возвращаем локальное хранилище
+            for (var i = 0; i < retObj.length; i++) {
+                var a = document.getElementById(retObj[i])
+                log(a);
+                someFriend.appendChild(a);
+                a.children[2].classList.add("removeFriend");
+                a.children[2].classList.remove("addFriend");
+                a.children[2].innerHTML = "&chi;";
+            }
             var targRemove;
             var rightFriendLi; // здесь будут все li из правой колонки
 
@@ -72,7 +82,6 @@ new Promise(function (resolve) {
                 // одного человека, после этого событие не работает
                 if(e.target.classList.contains('removeFriend')) {
                     friendList.appendChild(e.target.parentNode);
-                    e.target.classList.addEventListener("addFriend");
                     e.target.classList.remove("removeFriend");
                     e.target.innerHTML = "+";
                     
@@ -84,60 +93,83 @@ new Promise(function (resolve) {
 
             var data;
             friendList.addEventListener ("dragstart", function(e) {
+                // e.dataTransfer.effectAllowed="move";
+                data = e.target.parentNode;
+                e.dataTransfer.setDragImage(e.target, 25, 25);
+            });
+
+            someFriend.addEventListener("dragover", function(e) {
+                e.preventDefault();
+            });
+
+            someFriend.addEventListener("drop", function(e) {
+                e.preventDefault();
+                someFriend.appendChild(data);
+                data.children[2].classList.add("removeFriend");
+                data.children[2].classList.remove("addFriend");
+                data.children[2].innerHTML = "&chi;";
+                data = null;
+            });
+
+            someFriend.addEventListener ("dragstart", function(e) {
                 e.dataTransfer.effectAllowed="move";
                 data = e.target.parentNode;
                 e.dataTransfer.setDragImage(e.target, 25, 25);
-                return true;
             });
 
-            someFriend.addEventListener("dragenter", function(e) {
+            friendList.addEventListener("dragover", function(e) {
                 e.preventDefault();
-                return true;
             });
 
-            // someFriend.addEventListener("dragover", function(e) {
-            //     e.preventDefault();
-            // });
-
-            someFriend.addEventListener("dragdrop", function(e) {
-                someFriend.appendChild(data);
-                log(e.target)
-                e.stopPropagarion();
-                return false;
+            friendList.addEventListener("drop", function(e) {
+                e.preventDefault();
+                friendList.appendChild(data);
+                data.children[2].classList.add("addFriend"); // меняем на нужный класс спан
+                data.children[2].classList.remove("removeFriend"); // удаляем не нужный класс спану
+                data.children[2].innerHTML = "+";
+                data = null;
             });
 
 
-
-
-           
             searchAll.addEventListener("input", function() {
-                var temp = searchAll.value; // значение из инпута
-                if (temp.length === 0) { // если поле пустое, дальше перебор всех друзей
-                    // на поиск класса с display: none;
-                    for (var key in findFriend) {
-                        if(findFriend[key].classList.contains("not-visible")) { // проверка, если ли
-                            // в нашем списке друзей слева у эл-тов класс not-visible
-                            findFriend[key].classList.remove("not-visible"); // удаляем, если есть.
-                            // и после чего отобразятся все друзья
-                        }
-                    } 
-                } else { // если инпут не пустой, делаем всех скрытыми
-                    for (var key in findFriend) { 
-                        findFriend[key].classList.add("not-visible");
-                        return log(findFriend[key]);
-                        
-                    }
-                        for (var i = 0; i < findFriend.length; i++) { // цикл для поиска по индексу
-                        if(findFriend[i].innerHTML.indexOf(temp) !== -1){
-                            friendList.classList.remove("not-visible"); // выводим тех друзей,
+                var temp = searchAll.value.trim(); // значение из инпута
+      
+                   
+                        for (var i = 0; i < friendList.children.length; i++) { // цикл для поиска по индексу
+                        if(friendList.children[i].innerHTML.indexOf(temp) !== -1){
+                            friendList.children[i].classList.remove("not-visible"); // выводим тех друзей,
                             // которые соответствую поиску, удаляя класс с display: none;
+                        } else {
+                            friendList.children[i].classList.add("not-visible");
                         }
                     };
+            });
 
-                }
 
-              
-        });
+            searchSome.addEventListener("input", function() {
+                var temp = searchSome.value.trim(); // значение из инпута
+      
+                   
+                        for (var i = 0; i < someFriend.children.length; i++) { // цикл для поиска по индексу
+                        if(someFriend.children[i].innerHTML.indexOf(temp) !== -1){
+                            someFriend.children[i].classList.remove("not-visible"); // выводим тех друзей,
+                            // которые соответствую поиску, удаляя класс с display: none;
+                        } else {
+                            someFriend.children[i].classList.add("not-visible");
+                        }
+                    };
+            });
+
+            
+            save.addEventListener("click", function () {
+                var saveList = [];
+                for (var i = 0; i < someFriend.children.length; i++) {
+                                    saveList.push(someFriend.children[i].id)
+                                }
+                        var sObj = JSON.stringify(saveList);
+                        localStorage.setItem("object", sObj);
+                        log(localStorage)
+            });
 
 
     })
