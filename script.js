@@ -49,13 +49,15 @@ new Promise(function (resolve) {
     })
     .then(function (allLi) {
             var retObj = JSON.parse(localStorage.getItem("object")); // возвращаем локальное хранилище
-            for (var i = 0; i < retObj.length; i++) {
-                var a = document.getElementById(retObj[i])
-                log(a);
-                someFriend.appendChild(a);
-                a.children[2].classList.add("removeFriend");
-                a.children[2].classList.remove("addFriend");
-                a.children[2].innerHTML = "&chi;";
+            if(retObj) {
+                for (var i = 0; i < retObj.length; i++) {
+                    var a = document.getElementById(retObj[i])
+                    log(a);
+                    someFriend.appendChild(a);
+                    a.children[2].classList.add("removeFriend");
+                    a.children[2].classList.remove("addFriend");
+                    a.children[2].innerHTML = "&chi;";
+                }
             }
             var targRemove;
             var rightFriendLi; // здесь будут все li из правой колонки
